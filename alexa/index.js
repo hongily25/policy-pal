@@ -120,9 +120,33 @@ var data = {
 const handlers = {
     'LaunchRequest': function () {
         var alexasdk = this;
-        getPolicy(function(){
-            alexasdk.emit(':ask', PROMPT, REPEAT);
-        });
+        if (this.event.session.user.accessToken) {
+          var options = {
+            host: 'api.amazon.com',
+            path: '/user/profile?access_token=' + this.event.session.user.accessToken
+          };
+          
+          https.get('https://api.amazon.com/user/profile?access_token=' + this.event.session.user.accessToken, 
+          function(res){
+              var str = '';
+              console.log('Response is '+ res.statusCode);
+
+              res.on('data', function (chunk) {
+                     str += chunk;
+               });
+
+              res.on('end', function () {
+                   console.log(str);
+                   var string = JSON.parse(str);
+                   getPolicy(function(){
+                      alexasdk.emit(':ask', PROMPT, REPEAT);
+                   });
+               });
+          });
+          
+        } else {
+         alexasdk.emit(':tell', 'Please link your amazon account in the Alexa app.', 'Please link your amazon account in the Alexa app.')  
+        }
     },
     'ProgramNameIntent': function () {
         const speechOutput = 'Your program name is ' + data.Policy.ProgramName;
@@ -423,7 +447,7 @@ exports.handler = function (event, context, callback) {
 };
 
 function getPolicy(callback) {
-    var url = urlPrefix + 'amzn1.ask.account.123';
+    var url = urlPrefix + this.event.session.user.accessToken;
     // var url = urlPrefix + userID;
     console.log("Request Sent");
 

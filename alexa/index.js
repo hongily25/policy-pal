@@ -121,10 +121,6 @@ const handlers = {
     'LaunchRequest': function () {
         var alexasdk = this;
         if (this.event.session.user.accessToken) {
-          var options = {
-            host: 'api.amazon.com',
-            path: '/user/profile?access_token=' + this.event.session.user.accessToken
-          };
           
           https.get('https://api.amazon.com/user/profile?access_token=' + this.event.session.user.accessToken, 
           function(res){
@@ -140,7 +136,7 @@ const handlers = {
                    var string = JSON.parse(str);
                    getPolicy(function(){
                       alexasdk.emit(':ask', PROMPT, REPEAT);
-                   });
+                   }, string.user_id);
                });
           });
           
@@ -446,8 +442,8 @@ exports.handler = function (event, context, callback) {
     alexa.execute();
 };
 
-function getPolicy(callback) {
-    var url = urlPrefix + this.event.session.user.accessToken;
+function getPolicy(callback, amazonId) {
+    var url = urlPrefix + amazonId;
     // var url = urlPrefix + userID;
     console.log("Request Sent");
 
